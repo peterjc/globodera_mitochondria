@@ -1,0 +1,2 @@
+ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR114/ERR114517/ERR114517_1.fastq.gz
+ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR114/ERR114517/ERR114517_2.fastq.gz
