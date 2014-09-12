@@ -24,6 +24,13 @@ Published *Globodera* mtDNA circles
 TODO - Add list here plus associated references.
 
 
+TODO
+====
+
+Replace checked in ``scripts/blooming_reads.py`` etc with those already under
+https://github.com/peterjc/picobio/tree/master/blooming_reads
+
+
 References
 ==========
 
