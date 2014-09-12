@@ -59,7 +59,11 @@ ref = "all_mito2.fas"
 python = "python2.7"
 cmd_template = python + " interlace_fastq.py %s %s | " + python + " blooming_reads.py -c %s -k 20 -m 1 -f fastq | bgzip > %s"
 tmp_template = "/tmp/bloom_filter_all_mito_k20_1sid_rc/%s"
-new_template = "bloom_filter_all_mito_k20_1sid_rc/%s"
+new_template = "../data/bloom_filter_all_mito_k20_1sid_rc/%s"
+raw_fastq_folder = "../raw_data"
+
+if not os.path.isdir(new_template % ""):
+    os.mkdir(new_template % "")
 
 if not os.path.isdir(tmp_template % ""):
     os.mkdir(tmp_template % "")
@@ -72,7 +76,7 @@ def run(cmd):
         sys.exit(rc)
 
 this_job = 0
-for root, dirs, files in os.walk("../ERP000297/vol1/fastq/"):
+for root, dirs, files in os.walk(raw_fastq_folder):
     for f in files:
         if f.endswith("_1.fastq.gz"):
             this_job += 1
@@ -116,3 +120,4 @@ for root, dirs, files in os.walk("../ERP000297/vol1/fastq/"):
             #Build index if not there, load it if it is there:
             d = SeqIO.index_db(idx, new, "fastq")
             print "%i: %s has %i entries" % (this_job, new, len(d))
+            assert d, "Empty dict?"

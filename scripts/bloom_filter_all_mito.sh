@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-cd /mnt/shared/projects/Globodera_pallida/Gp_mito_2012_Sep
-python bloom_filter_all_mito.py
+cd ~/repositories/globodera_mitochondria/data
+python ../scripts/bloom_filter_all_mito.py
