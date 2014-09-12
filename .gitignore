@@ -1,3 +1,8 @@
+#Ignore raw data we will download...
+raw_data/*.fasta
+raw_data/*.gb
+raw_data/*.fastq.gz
+
 #Ignore backup files from some Unix editors,
 *~
 *.swp
