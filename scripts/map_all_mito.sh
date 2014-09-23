@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
-cd /mnt/shared/projects/Globodera_pallida/Gp_mito_2012_Sep
-python map_all_mito.py
+cd ~/repositories/globodera_mitochondria/data
+python ../scripts/map_all_mito.py
