@@ -68,7 +68,6 @@ else:
     #Assuming doing all of them:
     job = None #Use None for all of them
     #job = -1 #Use -1 for none of them
-    job = 1
 
 double_ref = "all_mito2.fas"
 single_ref = "all_mito.fas"
