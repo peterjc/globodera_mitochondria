@@ -73,12 +73,14 @@ else:
 double_ref = "all_mito2.fas"
 single_ref = "all_mito.fas"
 folder = "bloom_filter_all_mito_k20_1sid_rc"
+dedup_circular_sam = "~/repositories/picobio/blooming_reads/dedup_circular_sam.py"
+re_pair_circular_sam = "~/repositories/picobio/blooming_reads/re_pair_circular_sam.py"
 
 cmd_template = "mrfast --seq %s --seqcomp --search %s -o %s"
-dedup_template = "./dedup_circular_sam.py -i %s -c %s | samtools view -u -S - > %s"
+dedup_template = dedup_circular_sam + " -i %s -c %s | samtools view -u -S - > %s"
 bam_queryname_sort_template = "samtools sort -n %s %s"
 
-repair_template = "samtools view -h %s | ./re_pair_circular_sam.py -r %s -c %s -v %s | samtools view -u -S - > %s"
+repair_template = "samtools view -h %s | " + re_pair_circular_sam + " -r %s -c %s -v %s | samtools view -u -S - > %s"
 bam_coord_sort_template = "samtools sort %s %s"
 
 tmp_template = "/tmp/"  + folder + "/%s"
