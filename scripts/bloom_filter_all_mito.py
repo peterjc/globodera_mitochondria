@@ -116,7 +116,8 @@ for root, dirs, files in os.walk(raw_fastq_folder):
             if not os.path.isfile(idx):
                 print "%i: %s (INDEXING...)" % (this_job, new)
             else:
-                print "%i: %s (CHECKING INDEX...)" % (this_job, new)
+                print "%i: %s (COULD INDEX?)" % (this_job, new)
+                continue
             #Build index if not there, load it if it is there:
             d = SeqIO.index_db(idx, new, "fastq")
             print "%i: %s has %i entries" % (this_job, new, len(d))
