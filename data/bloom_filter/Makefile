@@ -26,7 +26,7 @@ all: bloom_filter index_bgz
 bloom_filter: $(FILTERED_READS)
 
 %.fastq.bgz: ../../raw_data/%_1.fastq.gz ../../raw_data/%_2.fastq.gz
-	@echo Filtering raw reads for $* to make $@
+	@echo "Filtering raw reads for $* to make $@"
 	$(INTERLACE_FASTQ) $(patsubst %,../../raw_data/%_1.fastq.gz,$*) $(patsubst %,../../raw_data/%_2.fastq.gz,$*) | $(BLOOMING_READS) -c $(REF) -k 20 -m 1 -f fastq | bgzip > $@
 
 #####################################################
@@ -34,6 +34,6 @@ bloom_filter: $(FILTERED_READS)
 index_bgz: $(INDEXES)
 
 %.fastq.bgz.idx: %.fastq.bgz
-	@echo (Re)indexing filtered reads for  $* to make $@
+	@echo "(Re)indexing filtered reads for $* to make $@"
 	rm -f $@
 	$(SEQIO_INDEX) -f fastq $^
