@@ -8,6 +8,8 @@ download:
 	chmod a-w *.gb
 	chmod a-w *.fasta
 	chmod a-w *.fastq.gz
+# Can we use this file to automating processing of each set of reads?
+	python -c "print('\n'.join(sorted(set(l.split(None, 1)[1].split('_', 1)[0] for l in open('md5sum.txt') if l.endswith('_1.fastq.gz\n')))))" > read_accessions.txt
 	echo "Download Done"
 
 check:
