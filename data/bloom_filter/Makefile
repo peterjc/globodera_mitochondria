@@ -20,9 +20,9 @@ U2 = $(patsubst %,../trimmed/%_2U.fastq.gz,$(ACCS))
 FILTERED_U_READS = $(patsubst %,%_U.fastq.bgz,$(ACCS))
 
 #Define some tools (symlink to picobio github repository?)
-INTERLACE_FASTQ = ../../scripts/interlace_fastq.py
-BLOOMING_READS = ../../scripts/blooming_reads.py
-SEQIO_INDEX = ../../scripts/seqio_index_db.py
+INTERLACE_FASTQ = ~/repositories/picobio/blooming_reads/interlace_fastq.py
+BLOOMING_READS = ~/repositories/picobio/blooming_reads/blooming_reads.py
+SEQIO_INDEX = ~/repositories/picobio/seq_manipulation/seqio_index_db.py
 
 all: bloom_filter index_bgz
 	@echo ACCS: $(ACCS)
