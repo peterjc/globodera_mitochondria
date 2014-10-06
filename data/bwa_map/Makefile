@@ -3,6 +3,14 @@ REF1_INDEX = ../all_mito.fas.bwt
 REF2 = ../all_mito2.fas
 REF2_INDEX = ../all_mito2.fas.bwt
 
+REFS = $(shell cat ../../raw_data/references.txt)
+
+SINGLE_REF = $(patsubst %,%.fas,$(REFS))
+DOUBLE_REF = $(patsubst %,%_X2.fas,$(REFS))
+
+SINGLE_BWT = $(patsubst %,%.fas.bwt,$(REFS))
+DOUBLE_BWT = $(patsubst %,%_X2.fas.bwt,$(REFS))
+
 #This gives all possible accessions, but not all may be downloaded:
 ALL_ACCS = $(shell cat ../../raw_data/read_accessions.txt)
 #This gives all the possible raw files on disc...
@@ -16,16 +24,49 @@ P = $(patsubst %,../bloom_filter/%_P.fastq.bgz,$(ACCS))
 #Lists for orphan reads
 U = $(patsubst %,../bloom_filter/%_U.fastq.bgz,$(ACCS))
 
-BWA_P = $(patsubst %,%_P.sam,$(ACCS))
-BWA_U =	$(patsubst %,%_U.sam,$(ACCS))
+COMBO = $(foreach a,$(ACCS),$(foreach r,$(REFS),$(a)_vs_$(r)))
+
+get_acc = $(firstword $(subst _vs_, , $1))
+get_ref = $(word 2,$(subst _vs_, , $1))
+
+BWA_P = $(patsubst %,%_P.sam,$(COMBO))
+BWA_U = $(patsubst %,%_U.sam,$(COMBO))
+
+#BWA_P = $(patsubst %,%_P.sam,$(ACCS))
+#BWA_U = $(patsubst %,%_U.sam,$(ACCS))
 
 #Define some tools (symlink to picobio github repository?)
 BWA = ~/Downloads/bwa-0.7.10/bwa
 DEDUP_CIRCLE = ~/repositories/picobio/blooming_reads/dedup_circular_sam.py
 REPAIR_CIRCLE = ~/repositories/picobio/blooming_reads/re_pair_circular_sam.py
 
-all: bwa_map
+emptry :=
+space := $(empty) $(empty)
+
+all: single double  bwa_map
 	@echo ACCS: $(ACCS)
+	@echo REFS: $(REFS)
+	@echo COMBO: $(COMBO)
+
+single: $(SINGLE_REF) $(SINGLE_BWT)
+
+double: $(DOUBLE_REF) $(DOUBLE_BWT)
+
+$(SINGLE_REF): %.fas: ../../raw_data/%.fasta
+	@echo "Missing $@ single reference"
+	ln -s ../../raw_data/$*.fasta $*.fas
+
+$(DOUBLE_REF): %_X2.fas: %.fas
+	@echo "Missing $@ double reference"
+	python -c "from Bio import SeqIO; SeqIO.write((r+r for r in SeqIO.parse('$*.fas', 'fasta')), '$*_X2.fas', 'fasta')"
+
+$(SINGLE_BWT): %.fas.bwt: %.fas
+	@echo "BWA indexing $* single reference"
+	bwa index $*.fas
+
+$(DOUBLE_BWT): %_X2.fas.bwt: %_X2.fas
+	@echo "BWA indexing $* double reference"
+	bwa index $*_X2.fas
 
 $(REF1_INDEX): $(REF1)
 	@echo "BWA indexing $(REF1)"
@@ -43,13 +84,18 @@ bwa_p_map: $(BWA_P)
 bwa_u_map: $(BWA_U)
 
 #Intermediate file, raw SAM output for mapping against doubled reference
-$(BWA_P): %_P.sam: ../bloom_filter/%_P.fastq.bgz $(REF2) $(REF2_INDEX)
+#$(BWA_P): $P
+$(BWA_P): %_P.sam:
+	@echo "Need [$(subst _vs_,$(space),$*)]"
+	@echo "Mapping $(call get_acc,$*) onto $(call get_ref,$*)" 
 	@echo "BWA mapping $* paired reads to make $@"
-	$(BWA) mem -p -S -a $(REF2) ../bloom_filter/$*_P.fastq.bgz > $*_P.sam
+	@echo "Try: $(BWA) mem -p -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_P.fastq.bgz > $*_P.sam"
+	@echo "Old: $(BWA) mem -p -S -a $(REF2) ../bloom_filter/$*_P.fastq.bgz > $*_P.sam"
 
-$(BWA_U): %_U.sam: ../bloom_filter/%_U.fastq.bgz $(REF2) $(REF2_INDEX)
+#$(BWA_U): $U
+$(BWA_U): %_U.sam:
 	@echo "BWA mapping $* orphaned reads to make $@"
-	$(BWA) mem -S -a $(REF2) ../bloom_filter/$*_U.fastq.bgz > $*_U.sam
+	@echo "$(BWA) mem -S -a $(REF2) ../bloom_filter/$*_U.fastq.bgz > $*_U.sam"
 
 #####################################################
 #
