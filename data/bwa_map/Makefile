@@ -29,11 +29,9 @@ COMBO = $(foreach a,$(ACCS),$(foreach r,$(REFS),$(a)_vs_$(r)))
 get_acc = $(firstword $(subst _vs_, , $1))
 get_ref = $(word 2,$(subst _vs_, , $1))
 
-BWA_P = $(patsubst %,%_P.sam,$(COMBO))
-BWA_U = $(patsubst %,%_U.sam,$(COMBO))
+BWA_P = $(patsubst %,%_X2_P.sam,$(COMBO))
+BWA_U = $(patsubst %,%_X2_U.sam,$(COMBO))
 
-#BWA_P = $(patsubst %,%_P.sam,$(ACCS))
-#BWA_U = $(patsubst %,%_U.sam,$(ACCS))
 
 #Define some tools (symlink to picobio github repository?)
 BWA = ~/Downloads/bwa-0.7.10/bwa
@@ -43,7 +41,7 @@ REPAIR_CIRCLE = ~/repositories/picobio/blooming_reads/re_pair_circular_sam.py
 emptry :=
 space := $(empty) $(empty)
 
-all: single double  bwa_map
+all: single double bwa_map
 	@echo ACCS: $(ACCS)
 	@echo REFS: $(REFS)
 	@echo COMBO: $(COMBO)
@@ -85,17 +83,14 @@ bwa_u_map: $(BWA_U)
 
 #Intermediate file, raw SAM output for mapping against doubled reference
 #$(BWA_P): $P
-$(BWA_P): %_P.sam:
-	@echo "Need [$(subst _vs_,$(space),$*)]"
-	@echo "Mapping $(call get_acc,$*) onto $(call get_ref,$*)" 
-	@echo "BWA mapping $* paired reads to make $@"
-	@echo "Try: $(BWA) mem -p -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_P.fastq.bgz > $*_P.sam"
-	@echo "Old: $(BWA) mem -p -S -a $(REF2) ../bloom_filter/$*_P.fastq.bgz > $*_P.sam"
+$(BWA_P): %_X2_P.sam:
+	@echo "Mapping $(call get_acc,$*) pairs onto $(call get_ref,$*)"
+	$(BWA) mem -p -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_P.fastq.bgz > $*_X2_P.sam 2> $*_X2_P.sam.log
 
 #$(BWA_U): $U
-$(BWA_U): %_U.sam:
-	@echo "BWA mapping $* orphaned reads to make $@"
-	@echo "$(BWA) mem -S -a $(REF2) ../bloom_filter/$*_U.fastq.bgz > $*_U.sam"
+$(BWA_U): %_X2_U.sam:
+	@echo "Mapping $(call get_acc,$*) orphans onto $(call get_ref,$*)"
+	$(BWA) mem -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_U.fastq.bgz > $*_X2_U.sam 2> $*_X2_U.sam.log
 
 #####################################################
 #
