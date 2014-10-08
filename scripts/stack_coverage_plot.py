@@ -92,11 +92,23 @@ def stack(data, filename, colors=None):
 
 if options.output:
     print("Drawing %i coverage files to %s" % (len(args), options.output))
-    #One combined PNG
-    data = []
+    #One combined PNG, attempt to sum any values for same references
+    ids = []
+    data = {}
     for filename in args:
-        data.extend(load(filename))
-    stack(data, options.output)
+        for id, values in load(filename):
+            if id in ids:
+                assert data[id].shape == values.shape
+                data[id] += values
+                #data[id] = np.vstack((data[id], values))
+            else:
+                ids.append(id)
+                data[id] = values
+    stack([(id, data[id]) for id in ids], options.output)
+    #data = []
+    #for filename in args:
+    #    data.extend(load(filename))
+    #stack(data, options.output)
 else:
     #One PNG per coverage file
     for filename in args:
