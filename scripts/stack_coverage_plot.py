@@ -1,7 +1,37 @@
 #!/usr/bin/env python
 import sys
 import numpy as np
+import matplotlib
+matplotlib.use('Agg') # Want to use without X windows
 from matplotlib import pyplot as plt
+from optparse import OptionParser
+
+VERSION = "0.0.2"
+
+USAGE = """usage: %prog -o OUTPUT.png INPUT.cov [INPUT2.cov ...]
+
+Default output is one PNG per input coverage file, appending .png
+to the input filename.
+
+Coverage files are expected in a FASTA QUAL like format, with
+a header line ">identifier" followed by multiple (long) lines
+of space separated coverage numbers for each base of the
+specificed sequence. Each line represents a different coverage
+category.
+"""
+
+parser = OptionParser(USAGE,
+                      version="%prog "+VERSION)
+
+parser.add_option("-o", "--output", dest="output",
+                  type="string", metavar="FILE",
+                  help="PNG file to create.")
+
+(options, args) = parser.parse_args()
+
+if not args:
+    sys.stderr.write("At least one coverage file required.")
+    sys.exit(1)
 
 def load(filename):
     h = open(filename)
@@ -60,12 +90,21 @@ def stack(data, filename, colors=None):
     plt.savefig(filename)
 
 
-for filename in sys.argv[1:]:
-    if not filename.endswith(".cov"):
-        continue
-    print "-"*60
-    print filename
-    print "-"*60
-    data = list(load(filename))
-    stack(data, filename+".png")
+if options.output:
+    print("Drawing %i coverage files to %s" % (len(args), options.output))
+    #One combined PNG
+    data = []
+    for filename in args:
+        data.extend(load(filename))
+    stack(data, options.output)
+else:
+    #One PNG per coverage file
+    for filename in args:
+        if not filename.endswith(".cov"):
+            continue
+        print "-"*60
+        print filename
+        print "-"*60
+        data = list(load(filename))
+        stack(data, filename+".png")
 print "Done"
