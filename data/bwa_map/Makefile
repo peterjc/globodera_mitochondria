@@ -35,20 +35,22 @@ BWA_P_BAM = $(patsubst %,%_P.bam,$(COMBO))
 BWA_U_BAM = $(patsubst %,%_U.bam,$(COMBO))
 BWA_P_COV = $(patsubst %,%_P.cov,$(COMBO))
 BWA_U_COV = $(patsubst %,%_U.cov,$(COMBO))
+BWA_COV = $(patsubst %,bwa_coverage_%.png,$(ACCS))
 
 #Define some tools (symlink to picobio github repository?)
 BWA = ~/Downloads/bwa-0.7.10/bwa
 RESTORE_SEQ = ~/repositories/picobio/sambam/sam_restore_seq.py
 DEDUP_CIRCLE = ~/repositories/picobio/blooming_reads/dedup_circular_sam.py
 REPAIR_CIRCLE = ~/repositories/picobio/blooming_reads/re_pair_circular_sam.py
+COVERAGE_PLOT = ../../scripts/stack_coverage_plot.py
 
 empty :=
 space := $(empty) $(empty)
 
-all: single double bwa_map
+all: single double bwa_map bwa_coverage
 	@echo ACCS: $(ACCS)
 	@echo REFS: $(REFS)
-	@echo COMBO: $(COMBO)
+	#@echo COMBO: $(COMBO)
 
 single: $(SINGLE_REF) $(SINGLE_BWT)
 
@@ -78,9 +80,9 @@ $(REF2_INDEX): $(REF2)
 	@echo "BWA indexing $(REF2)"
 	bwa index $@
 
+#####################################################
 bwa_map: bwa_p_map bwa_u_map
 
-#####################################################
 bwa_p_map: $(BWA_P_BAM)
 
 bwa_u_map: $(BWA_U_BAM)
@@ -109,6 +111,16 @@ $(BWA_U_BAM): %_U.bam: %_X2_U.sam
 	$(RESTORE_SEQ) < $*_X2_U.sam | $(DEDUP_CIRCLE) -c ../refs/$(call get_ref,$*).fas | $(REPAIR_CIRCLE) -c ../refs/$(call get_ref,$*).fas -v $*_U.cov | samtools view -F 4 -S -u - | samtools sort - $*_U
 	samtools index $*_U.bam
 	samtools idxstats $*_U.bam
+
+#####################################################
+
+bwa_coverage: $(BWA_COV)
+
+#This claims to depend on *all* to coverage files, actually only
+#depends on those for the current read accession. How to say that?
+$(BWA_COV): bwa_coverage_%.png: $(BWA_P_BAM) $(BWA_U_BAM)
+	@echo "Plotting $* coverage to make $@"
+	$(COVERAGE_PLOT) -o $@ $(foreach r,$(REFS),$*_vs_$(r)_P.cov $*_vs_$(r)_U.cov)
 
 #####################################################
 #
