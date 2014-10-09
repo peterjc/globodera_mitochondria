@@ -35,7 +35,7 @@ BWA_P_BAM = $(patsubst %,%_P.bam,$(COMBO))
 BWA_U_BAM = $(patsubst %,%_U.bam,$(COMBO))
 BWA_P_COV = $(patsubst %,%_P.cov,$(COMBO))
 BWA_U_COV = $(patsubst %,%_U.cov,$(COMBO))
-BWA_COV = $(patsubst %,%s_bwa_coverage.png,$(ACCS))
+BWA_COV_PNG = $(patsubst %,%s_bwa_coverage.png,$(ACCS))
 
 #Define some tools (symlink to picobio github repository?)
 BWA = ~/Downloads/bwa-0.7.10/bwa
@@ -109,7 +109,7 @@ $(BWA_U_BAM): %_U.bam: %_X2_U.sam
 
 #####################################################
 
-bwa_coverage: $(BWA_COV)
+bwa_coverage: $(BWA_COV_PNG)
 
 $(BWA_P_COV): %_P.cov: %_P.bam
 	@echo "Computing paired coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*)"
@@ -121,7 +121,7 @@ $(BWA_U_COV): %_U.cov: %_U.bam
 
 #This claims to depend on *all* to coverage files, actually only
 #depends on those for the current read accession. How to say that?
-$(BWA_COV): %_bwa_coverage.png: $(BWA_P_COV) $(BWA_U_COV)
+$(BWA_COV_PNG): %_bwa_coverage.png: $(BWA_P_COV) $(BWA_U_COV)
 	@echo "Plotting $* coverage to make $@"
 	$(COVERAGE_PLOT) -o $@ $(foreach r,$(REFS),$*_vs_$(r)_P.cov $*_vs_$(r)_U.cov)
 
