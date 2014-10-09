@@ -35,12 +35,13 @@ BWA_P_BAM = $(patsubst %,%_P.bam,$(COMBO))
 BWA_U_BAM = $(patsubst %,%_U.bam,$(COMBO))
 BWA_P_COV = $(patsubst %,%_P.cov,$(COMBO))
 BWA_U_COV = $(patsubst %,%_U.cov,$(COMBO))
-BWA_COV = $(patsubst %,bwa_coverage_%.png,$(ACCS))
+BWA_COV = $(patsubst %,%s_bwa_coverage.png,$(ACCS))
 
 #Define some tools (symlink to picobio github repository?)
 BWA = ~/Downloads/bwa-0.7.10/bwa
 DEDUP_CIRCLE = ~/repositories/picobio/sambam/sam_undouble_circles.py
 REPAIR_CIRCLE = ~/repositories/picobio/blooming_reads/re_pair_circular_sam.py
+CALC_COVERAGE = ~/repositories/picobio/sambam/sam_circular_coverage.py
 COVERAGE_PLOT = ../../scripts/stack_coverage_plot.py
 
 empty :=
@@ -100,24 +101,28 @@ $(BWA_U): %_X2_U.sam:
 	rm $*_X2_U.sam.log
 
 $(BWA_P_BAM): %_P.bam: %_X2_P.sam
-	@echo "Fixing up paired SAM to make $@ (and coverage)"
-	$(DEDUP_CIRCLE) -i $*_X2_P.sam -c ../refs/$(call get_ref,$*).fas | $(REPAIR_CIRCLE) -c ../refs/$(call get_ref,$*).fas -v $*_P.cov | samtools view -F 4 -S -u - | samtools sort - $*_P
-	samtools index $*_P.bam
-	samtools idxstats $*_P.bam
+	@echo "Fixing up paired SAM to make $@"
+	$(DEDUP_CIRCLE) -i $*_X2_P.sam -c ../refs/$(call get_ref,$*).fas | $(REPAIR_CIRCLE) -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $*_P.bam
 
 $(BWA_U_BAM): %_U.bam: %_X2_U.sam
-	@echo "Fixing up orphans SAM to make $@ (and coverage)"
-	$(DEDUP_CIRCLE) -i $*_X2_U.sam -c ../refs/$(call get_ref,$*).fas | $(REPAIR_CIRCLE) -c ../refs/$(call get_ref,$*).fas -v $*_U.cov | samtools view -F 4 -S -u - | samtools sort - $*_U
-	samtools index $*_U.bam
-	samtools idxstats $*_U.bam
+	@echo "Fixing up orphans SAM to make $@"
+	$(DEDUP_CIRCLE) -i $*_X2_U.sam -c ../refs/$(call get_ref,$*).fas | $(REPAIR_CIRCLE) -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $*_U.bam
 
 #####################################################
 
 bwa_coverage: $(BWA_COV)
 
+$(BWA_P_COV): %_P.cov: %_P.bam
+	@echo "Computing paired coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*)"
+	samtools view -h $*_P.bam | $(CALC_COVERAGE) -c ../refs/$(call get_ref,$*).fas -o $*_P.cov
+
+$(BWA_U_COV): %_U.cov: %_U.bam
+	@echo "Computing singleton coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*)"
+	samtools view -h $*_U.bam | $(CALC_COVERAGE) -c ../refs/$(call get_ref,$*).fas -o $*_U.cov
+
 #This claims to depend on *all* to coverage files, actually only
 #depends on those for the current read accession. How to say that?
-$(BWA_COV): bwa_coverage_%.png: $(BWA_P_BAM) $(BWA_U_BAM)
+$(BWA_COV): %_bwa_coverage.png: $(BWA_P_COV) $(BWA_U_COV)
 	@echo "Plotting $* coverage to make $@"
 	$(COVERAGE_PLOT) -o $@ $(foreach r,$(REFS),$*_vs_$(r)_P.cov $*_vs_$(r)_U.cov)
 
