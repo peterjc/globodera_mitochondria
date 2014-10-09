@@ -1,3 +1,5 @@
+#TODO - Run BAM EOF check
+
 REF1 = ../all_mito.fas
 REF1_INDEX = ../all_mito.fas.bwt
 REF2 = ../all_mito2.fas
@@ -80,7 +82,9 @@ $(REF2_INDEX): $(REF2)
 	bwa index $@
 
 #####################################################
-bwa_map: bwa_p_map bwa_u_map $(BWA_BAM)
+bwa_map: bwa_p_map bwa_u_map bwa_merge
+
+bwa_merge: $(BWA_BAM)
 
 bwa_p_map: $(BWA_P_BAM)
 
