@@ -40,7 +40,6 @@ BWA_COV = $(patsubst %,%s_bwa_coverage.png,$(ACCS))
 #Define some tools (symlink to picobio github repository?)
 BWA = ~/Downloads/bwa-0.7.10/bwa
 DEDUP_CIRCLE = ~/repositories/picobio/sambam/sam_undouble_circles.py
-REPAIR_CIRCLE = ~/repositories/picobio/blooming_reads/re_pair_circular_sam.py
 CALC_COVERAGE = ~/repositories/picobio/sambam/sam_circular_coverage.py
 COVERAGE_PLOT = ../../scripts/stack_coverage_plot.py
 
@@ -102,11 +101,11 @@ $(BWA_U): %_X2_U.sam:
 
 $(BWA_P_BAM): %_P.bam: %_X2_P.sam
 	@echo "Fixing up paired SAM to make $@"
-	$(DEDUP_CIRCLE) -i $*_X2_P.sam -c ../refs/$(call get_ref,$*).fas | $(REPAIR_CIRCLE) -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $*_P.bam
+	$(DEDUP_CIRCLE) -i $*_X2_P.sam -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $*_P.bam
 
 $(BWA_U_BAM): %_U.bam: %_X2_U.sam
 	@echo "Fixing up orphans SAM to make $@"
-	$(DEDUP_CIRCLE) -i $*_X2_U.sam -c ../refs/$(call get_ref,$*).fas | $(REPAIR_CIRCLE) -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $*_U.bam
+	$(DEDUP_CIRCLE) -i $*_X2_U.sam -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $*_U.bam
 
 #####################################################
 
