@@ -3,6 +3,28 @@ raw_data/*.fasta
 raw_data/*.gb
 raw_data/*.fastq.gz
 
+#Live data
+*.fas
+*.fastq
+*.fastq.gz
+*.fastq.bgz
+*.sam
+*.bam
+*.cov
+*.png
+
+#Misc indexes
+*.idx
+*.bam
+*.fai
+
+#BWA indexes
+*.fas.amb
+*.fas.ann
+*.fas.bwt
+*.fas.pac
+*.fas.sa
+
 #Ignore backup files from some Unix editors,
 *~
 *.swp
