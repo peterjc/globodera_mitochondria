@@ -33,8 +33,8 @@ BWA_P = $(patsubst %,%_X2_P.sam,$(COMBO))
 BWA_U = $(patsubst %,%_X2_U.sam,$(COMBO))
 BWA_P_BAM = $(patsubst %,%_P.bam,$(COMBO))
 BWA_U_BAM = $(patsubst %,%_U.bam,$(COMBO))
-BWA_P_COV = $(patsubst %,%_P.cov,$(COMBO))
-BWA_U_COV = $(patsubst %,%_U.cov,$(COMBO))
+BWA_BAM = $(patsubst %,%.bam,$(COMBO))
+BWA_COV = $(patsubst %,%.cov,$(COMBO))
 BWA_COV_PNG = $(patsubst %,%s_bwa_coverage.png,$(ACCS))
 
 #Define some tools (symlink to picobio github repository?)
@@ -80,7 +80,7 @@ $(REF2_INDEX): $(REF2)
 	bwa index $@
 
 #####################################################
-bwa_map: bwa_p_map bwa_u_map
+bwa_map: bwa_p_map bwa_u_map $(BWA_BAM)
 
 bwa_p_map: $(BWA_P_BAM)
 
@@ -107,17 +107,17 @@ $(BWA_U_BAM): %_U.bam: %_X2_U.sam
 	@echo "Fixing up orphans SAM to make $@"
 	$(DEDUP_CIRCLE) -i $*_X2_U.sam -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $*_U.bam
 
+$(BWA_BAM): %.bam: %_P.bam %_U.bam
+	@echo "Merging paired and singleton BAM files to make $@"
+	samtools merge -n -f $@ $*_P.bam $*_U.bam
+
 #####################################################
 
 bwa_coverage: $(BWA_COV_PNG)
 
-$(BWA_P_COV): %_P.cov: %_P.bam
-	@echo "Computing paired coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*)"
-	samtools view -h $*_P.bam | $(CALC_COVERAGE) -c ../refs/$(call get_ref,$*).fas -o $*_P.cov
-
-$(BWA_U_COV): %_U.cov: %_U.bam
-	@echo "Computing singleton coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*)"
-	samtools view -h $*_U.bam | $(CALC_COVERAGE) -c ../refs/$(call get_ref,$*).fas -o $*_U.cov
+$(BWA_COV): %.cov: %.bam
+	@echo "Computing coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*)"
+	samtools view -h $*.bam | $(CALC_COVERAGE) -c ../refs/$(call get_ref,$*).fas -o $@
 
 #This claims to depend on *all* to coverage files, actually only
 #depends on those for the current read accession. How to say that?
