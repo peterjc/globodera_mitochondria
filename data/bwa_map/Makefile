@@ -128,9 +128,9 @@ $(BWA_COV): %.cov: %.bam
 
 #This claims to depend on *all* to coverage files, actually only
 #depends on those for the current read accession. How to say that?
-$(BWA_COV_PNG): %_bwa_coverage.png: $(BWA_P_COV) $(BWA_U_COV)
+$(BWA_COV_PNG): %_bwa_coverage.png: $(BWA_COV)
 	@echo "Plotting $* coverage to make $@"
-	$(COVERAGE_PLOT) -o $@ $(foreach r,$(REFS),$*_vs_$(r)_P.cov $*_vs_$(r)_U.cov)
+	$(COVERAGE_PLOT) -o $@ $(foreach r,$(REFS),$*_vs_$(r).cov)
 
 #####################################################
 #
