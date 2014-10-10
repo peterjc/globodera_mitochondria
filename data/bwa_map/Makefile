@@ -41,6 +41,7 @@ BWA_COV_PNG = $(patsubst %,%s_bwa_coverage.png,$(ACCS))
 
 #Define some tools (symlink to picobio github repository?)
 BWA = ~/Downloads/bwa-0.7.10/bwa
+CHECK_EOF = ~/repositories/picobio/sambam/bgzf_check_eof.py
 DEDUP_CIRCLE = ~/repositories/picobio/sambam/sam_undouble_circles.py
 CALC_COVERAGE = ~/repositories/picobio/sambam/sam_circular_coverage.py
 COVERAGE_PLOT = ../../scripts/stack_coverage_plot.py
@@ -113,7 +114,8 @@ $(BWA_U_BAM): %_U.bam: %_X2_U.sam
 
 $(BWA_BAM): %.bam: %_P.bam %_U.bam
 	@echo "Merging paired and singleton BAM files to make $@"
-	samtools merge -n -f $@ $*_P.bam $*_U.bam
+	$(CHECK_EOF) $*_P.bam $*_U.bam
+	samtools merge -f $@ $*_P.bam $*_U.bam
 
 #####################################################
 
@@ -121,6 +123,7 @@ bwa_coverage: $(BWA_COV_PNG)
 
 $(BWA_COV): %.cov: %.bam
 	@echo "Computing coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*)"
+	$(CHECK_EOF) $*.bam
 	samtools view -h $*.bam | $(CALC_COVERAGE) -c ../refs/$(call get_ref,$*).fas -o $@
 
 #This claims to depend on *all* to coverage files, actually only
