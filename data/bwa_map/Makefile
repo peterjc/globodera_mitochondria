@@ -64,7 +64,8 @@ all: single double bwa_map bwa_coverage
 	@echo REFS: $(REFS)
 	#@echo COMBO: $(COMBO)
 
-.INTERMEDIATE: $(BWA_X2_P_SAM) $(BWA_X2_U_SAM) $(BWA_X2_P_BAM) $(BWA_X2_U_BAM)
+#These are intermediate, but I will remove them once not needed
+.SECONDARY: $(BWA_X2_P_SAM) $(BWA_X2_U_SAM) $(BWA_X2_P_BAM) $(BWA_X2_U_BAM)
 
 single: $(SINGLE_REF) $(SINGLE_BWT)
 
@@ -118,7 +119,7 @@ $(BWA_X2_P_BAM): %_X2_P.bam: %_X2_P.sam
 	@echo "Converting $< into $@"
 	samtools view -S -b $< > $@
 	$(CHECK_EOF) $@
-#	rm $<
+	rm $<
 
 #intermediate files, raw BAM output from mapping against doubled reference
 #Should be able to let make delete the input file at the end of the run, but can do now.
@@ -126,7 +127,7 @@ $(BWA_X2_U_BAM): %_X2_U.bam: %_X2_U.sam
 	@echo "Converting $< into $@"
 	samtools view -S -b $< > $@
 	$(CHECK_EOF) $@
-#	rm $<
+	rm $<
 
 #Semi-intermediate files, merged BAM output from mapping pairs & singletons to doubled ref
 #Should be able to let make delete its input files at end of run, but can do now.
@@ -134,7 +135,7 @@ $(BWA_X2_BAM): %_X2.bam: %_X2_P.bam %_X2_U.bam
 	@echo "Merging $^ into $@"
 	samtools merge -f $@ $^
 	$(CHECK_EOF) $@
-#	rm $^
+	rm $^
 
 #TODO - Sort at this point?
 $(BWA_BAM): %.bam: %_X2.bam
