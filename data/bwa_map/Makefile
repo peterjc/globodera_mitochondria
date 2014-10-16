@@ -41,6 +41,9 @@ get_ref = $(word 2,$(subst _vs_, , $1))
 #BWA_X2_P_BAM = $(patsubst %,%_X2_P.bam,$(COMBO))
 #BWA_X2_U_BAM = $(patsubst %,%_X2_U.bam,$(COMBO))
 BWA_X2_BAM = $(patsubst %,%_X2.bam,$(COMBO))
+BWA_X2_COV = $(patsubst %,%_X2.cov,$(COMBO))
+BWA_X2_COV_PNG = $(patsubst %,%_X2_bwa_coverage.png,$(ACCS))
+
 BWA_BAM = $(patsubst %,%.bam,$(COMBO))
 BWA_COV = $(patsubst %,%.cov,$(COMBO))
 BWA_COV_PNG = $(patsubst %,%_bwa_coverage.png,$(ACCS))
@@ -142,18 +145,27 @@ $(BWA_BAM): %.bam: %_X2.bam
 
 #####################################################
 
-bwa_coverage: $(BWA_COV) $(BWA_COV_PNG)
+bwa_coverage: $(BWA_COV) $(BWA_COV_PNG) $(BWA_X2_COV) $(BWA_X2_COV_PNG)
 
 $(BWA_COV): %.cov: %.bam
 	@echo "Computing coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*)"
 	$(CHECK_EOF) $*.bam
 	samtools view -h $*.bam | $(CALC_COVERAGE) -c ../refs/$(call get_ref,$*).fas -o $@
 
+$(BWA_X2_COV): %_X2.cov: %_X2.bam
+	@echo "Computing coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*) (doubled)"
+	$(CHECK_EOF) $*_X2.bam
+	samtools view -h $*_X2.bam | $(CALC_COVERAGE) -c ../refs/$(call get_ref,$*).fas -o $@
+
 #This claims to depend on *all* to coverage files, actually only
 #depends on those for the current read accession. How to say that?
 $(BWA_COV_PNG): %_bwa_coverage.png: $(BWA_COV)
 	@echo "Plotting $* coverage to make $@"
 	$(COVERAGE_PLOT) -o $@ $(foreach r,$(REFS),$*_vs_$(r).cov)
+
+$(BWA_X2_COV_PNG): %_X2_bwa_coverage.png: $(BWA_X2_COV)
+	@echo "Plotting $* coverage to make $@"
+	$(COVERAGE_PLOT) -o $@ $(foreach r,$(REFS),$*_vs_$(r)_X2.cov)
 
 #####################################################
 #
