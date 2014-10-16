@@ -6,6 +6,8 @@ REF2 = ../all_mito2.fas
 REF2_INDEX = ../all_mito2.fas.bwt
 
 REFS = $(shell cat ../../raw_data/references.txt)
+#Uncomment for testing:
+#REFS = AJ249395
 
 SINGLE_REF = $(patsubst %,%.fas,$(REFS))
 DOUBLE_REF = $(patsubst %,%_X2.fas,$(REFS))
@@ -15,6 +17,8 @@ DOUBLE_BWT = $(patsubst %,%_X2.fas.bwt,$(REFS))
 
 #This gives all possible accessions, but not all may be downloaded:
 ALL_ACCS = $(shell cat ../../raw_data/read_accessions.txt)
+#Uncomment for testing:
+#ALL_ACCS = ERR019315
 #This gives all the possible raw files on disc...
 RAW1_ACCS = $(patsubst ../../raw_data/%_1.fastq.gz,%,$(wildcard ../../raw_data/*_1.fastq.gz))
 RAW2_ACCS = $(patsubst ../../raw_data/%_2.fastq.gz,%,$(wildcard ../../raw_data/*_2.fastq.gz))
@@ -31,10 +35,11 @@ COMBO = $(foreach a,$(ACCS),$(foreach r,$(REFS),$(a)_vs_$(r)))
 get_acc = $(firstword $(subst _vs_, , $1))
 get_ref = $(word 2,$(subst _vs_, , $1))
 
-BWA_X2_P_SAM = $(patsubst %,%_X2_P.sam,$(COMBO))
-BWA_X2_U_SAM = $(patsubst %,%_X2_U.sam,$(COMBO))
-BWA_X2_P_BAM = $(patsubst %,%_X2_P.bam,$(COMBO))
-BWA_X2_U_BAM = $(patsubst %,%_X2_U.bam,$(COMBO))
+#Want these to be auto-deleted intermediate files...
+#BWA_X2_P_SAM = $(patsubst %,%_X2_P.sam,$(COMBO))
+#BWA_X2_U_SAM = $(patsubst %,%_X2_U.sam,$(COMBO))
+#BWA_X2_P_BAM = $(patsubst %,%_X2_P.bam,$(COMBO))
+#BWA_X2_U_BAM = $(patsubst %,%_X2_U.bam,$(COMBO))
 BWA_X2_BAM = $(patsubst %,%_X2.bam,$(COMBO))
 BWA_BAM = $(patsubst %,%.bam,$(COMBO))
 BWA_COV = $(patsubst %,%.cov,$(COMBO))
@@ -85,45 +90,59 @@ $(REF2_INDEX): $(REF2)
 
 #####################################################
 #For now explicitly keep the X2 BAM files...
-bwa_map: $(BWA_X2_BAM) $(BWA_BAM)
+bwa_map: $(BWA_BAM)
 
-#Temp files, raw SAM output from mapping against doubled reference
-$(BWA_X2_P_SAM): %_X2_P.sam:
+#intermediate files, raw SAM output from mapping against doubled reference
+#TODO - how to set dependency to only the specific files needed?
+#$(BWA_X2_P_SAM): %_X2_P.sam: $(DOUBLE_REF) $(P) $(U)
+%_X2_P.sam: $(DOUBLE_REF) $(P) $(U)
 	@echo "Mapping $(call get_acc,$*) pairs onto $(call get_ref,$*)"
-	$(BWA) mem -p -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_P.fastq.bgz > $*_X2_P.sam 2> $*_X2_P.sam.log
+	$(BWA) mem -p -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_P.fastq.bgz > $@ 2> $*_X2_P.sam.log
 	rm $*_X2_P.sam.log
 
-$(BWA_X2_U_SAM): %_X2_U.sam:
+#intermediate files, raw SAM output from mapping against doubled reference
+#TODO - how to set dependency to only the specific files needed?
+#$(BWA_X2_U_SAM): %_X2_U.sam: $(DOUBLE_REF) $(P) $(U)
+%_X2_U.sam: $(DOUBLE_REF) $(P) $(U)
 	@echo "Mapping $(call get_acc,$*) orphans onto $(call get_ref,$*)"
-	$(BWA) mem -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_U.fastq.bgz > $*_X2_U.sam 2> $*_X2_U.sam.log
+	$(BWA) mem -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_U.fastq.bgz > $@ 2> $*_X2_U.sam.log
 	rm $*_X2_U.sam.log
 
-#Temp files, raw BAM output from mapping against doubled reference
-$(BWA_X2_P_BAM): %_X2_P.bam: %_X2_P.sam
+#intermediate files, raw BAM output from mapping against doubled reference
+#Should be able to let make delete the input file at the end of the run, but can do now.
+#$(BWA_X2_P_BAM): %_X2_P.bam: %_X2_P.sam
+%_X2_P.bam: %_X2_P.sam
 	@echo "Converting SAM into $@"
 	samtools view -S -b $*_X2_P.sam > $@
 	$(CHECK_EOF) $@
+	rm $*_X2_P.sam
 
-$(BWA_X2_U_BAM): %_X2_U.bam: %_X2_U.sam
+#intermediate files, raw BAM output from mapping against doubled reference
+#Should be able to let make delete the input file at the end of the run, but can do now.
+#$(BWA_X2_U_BAM): %_X2_U.bam: %_X2_U.sam
+%_X2_U.bam: %_X2_U.sam
 	@echo "Converting SAM into $@"
 	samtools view -S -b $*_X2_U.sam > $@
 	$(CHECK_EOF) $@
+	rm $*_X2_U.sam
 
-#Intermediate files, merged BAM output from mapping pairs & singletons to doubled ref
+#Semi-intermediate files, merged BAM output from mapping pairs & singletons to doubled ref
+#Should be able to let make delete its input files at end of run, but can do now.
 $(BWA_X2_BAM): %_X2.bam: %_X2_P.bam %_X2_U.bam
 	@echo "Merging paired and single mappings into $@"
 	samtools merge -f $@ $*_X2_P.bam $*_X2_U.bam
 	$(CHECK_EOF) $@
+#	rm $*_X2_P.bam $*_X2_U.bam
 
 #TODO - Sort at this point?
 $(BWA_BAM): %.bam: %_X2.bam
 	@echo "Applying de-circle logic and dropping unmapped reads to make $@"
-	samtools view -h $*_X2.bam | $(DEDUP_CIRCLE) -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $*.bam
-	$(CHECK_EOF) $*.bam
+	samtools view -h $*_X2.bam | $(DEDUP_CIRCLE) -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $@
+	$(CHECK_EOF) $@
 
 #####################################################
 
-bwa_coverage: $(BWA_COV_PNG)
+bwa_coverage: $(BWA_COV) $(BWA_COV_PNG)
 
 $(BWA_COV): %.cov: %.bam
 	@echo "Computing coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*)"
