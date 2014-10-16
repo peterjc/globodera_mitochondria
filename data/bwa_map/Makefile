@@ -147,21 +147,25 @@ $(BWA_COV): %.cov: %.bam
 	@echo "Computing coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*)"
 	$(CHECK_EOF) $<
 	samtools view -h $< | $(CALC_COVERAGE) -c ../refs/$(call get_ref,$*).fas -o $@
+	@touch $@
 
 $(BWA_X2_COV): %_X2.cov: %_X2.bam
 	@echo "Computing coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*) (doubled)"
 	$(CHECK_EOF) $<
 	samtools view -h $< | $(CALC_COVERAGE) -c ../refs/$(call get_ref,$*).fas -o $@
+	@touch $@
 
 #This claims to depend on *all* to coverage files, actually only
 #depends on those for the current read accession. How to say that?
 $(BWA_COV_PNG): %_bwa_coverage.png: $(BWA_COV)
 	@echo "Plotting $* coverage to make $@"
 	$(COVERAGE_PLOT) -o $@ $(foreach r,$(REFS),$*_vs_$(r).cov)
+	@touch $@
 
 $(BWA_X2_COV_PNG): %_X2_bwa_coverage.png: $(BWA_X2_COV)
 	@echo "Plotting $* coverage to make $@"
 	$(COVERAGE_PLOT) -o $@ $(foreach r,$(REFS),$*_vs_$(r)_X2.cov)
+	@touch $@
 
 #####################################################
 #
