@@ -137,7 +137,7 @@ $(BWA_X2_BAM): %_X2.bam: %_X2_P.bam %_X2_U.bam
 #TODO - Sort at this point?
 $(BWA_BAM): %.bam: %_X2.bam
 	@echo "Applying de-circle logic and dropping unmapped reads to make $@"
-	samtools view -h $*_X2.bam | $(DEDUP_CIRCLE) -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $@
+	samtools view -F 4 -h $*_X2.bam | $(DEDUP_CIRCLE) -c ../refs/$(call get_ref,$*).fas | samtools view -S -b - > $@
 	$(CHECK_EOF) $@
 
 #####################################################
