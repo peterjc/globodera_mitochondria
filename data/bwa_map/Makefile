@@ -37,7 +37,7 @@ BWA_P_BAM = $(patsubst %,%_P.bam,$(COMBO))
 BWA_U_BAM = $(patsubst %,%_U.bam,$(COMBO))
 BWA_BAM = $(patsubst %,%.bam,$(COMBO))
 BWA_COV = $(patsubst %,%.cov,$(COMBO))
-BWA_COV_PNG = $(patsubst %,%s_bwa_coverage.png,$(ACCS))
+BWA_COV_PNG = $(patsubst %,%_bwa_coverage.png,$(ACCS))
 
 #Define some tools (symlink to picobio github repository?)
 BWA = ~/Downloads/bwa-0.7.10/bwa
