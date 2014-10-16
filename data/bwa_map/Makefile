@@ -33,8 +33,9 @@ get_ref = $(word 2,$(subst _vs_, , $1))
 
 BWA_X2_P_SAM = $(patsubst %,%_X2_P.sam,$(COMBO))
 BWA_X2_U_SAM = $(patsubst %,%_X2_U.sam,$(COMBO))
-BWA_P_BAM = $(patsubst %,%_P.bam,$(COMBO))
-BWA_U_BAM = $(patsubst %,%_U.bam,$(COMBO))
+BWA_X2_P_BAM = $(patsubst %,%_X2_P.bam,$(COMBO))
+BWA_X2_U_BAM = $(patsubst %,%_X2_U.bam,$(COMBO))
+BWA_X2_BAM = $(patsubst %,%_X2.bam,$(COMBO))
 BWA_BAM = $(patsubst %,%.bam,$(COMBO))
 BWA_COV = $(patsubst %,%.cov,$(COMBO))
 BWA_COV_PNG = $(patsubst %,%_bwa_coverage.png,$(ACCS))
@@ -83,15 +84,10 @@ $(REF2_INDEX): $(REF2)
 	bwa index $@
 
 #####################################################
-bwa_map: bwa_p_map bwa_u_map bwa_merge
+#For now explicitly keep the X2 BAM files...
+bwa_map: $(BWA_X2_BAM) $(BWA_BAM)
 
-bwa_merge: $(BWA_BAM)
-
-bwa_p_map: $(BWA_P_BAM)
-
-bwa_u_map: $(BWA_U_BAM)
-
-#Intermediate file, raw SAM output for mapping against doubled reference
+#Temp files, raw SAM output from mapping against doubled reference
 $(BWA_X2_P_SAM): %_X2_P.sam:
 	@echo "Mapping $(call get_acc,$*) pairs onto $(call get_ref,$*)"
 	$(BWA) mem -p -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_P.fastq.bgz > $*_X2_P.sam 2> $*_X2_P.sam.log
@@ -102,18 +98,28 @@ $(BWA_X2_U_SAM): %_X2_U.sam:
 	$(BWA) mem -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_U.fastq.bgz > $*_X2_U.sam 2> $*_X2_U.sam.log
 	rm $*_X2_U.sam.log
 
-$(BWA_P_BAM): %_P.bam: %_X2_P.sam
-	@echo "Fixing up paired SAM to make $@"
-	$(DEDUP_CIRCLE) -i $*_X2_P.sam -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $*_P.bam
+#Temp files, raw BAM output from mapping against doubled reference
+$(BWA_X2_P_BAM): %_X2_P.bam: %_X2_P.sam
+	@echo "Converting SAM into $@"
+	samtools view -S -b $*_X2_P.sam > $@
+	$(CHECK_EOF) $@
 
-$(BWA_U_BAM): %_U.bam: %_X2_U.sam
-	@echo "Fixing up orphans SAM to make $@"
-	$(DEDUP_CIRCLE) -i $*_X2_U.sam -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $*_U.bam
+$(BWA_X2_U_BAM): %_X2_U.bam: %_X2_U.sam
+	@echo "Converting SAM into $@"
+	samtools view -S -b $*_X2_U.sam > $@
+	$(CHECK_EOF) $@
 
-$(BWA_BAM): %.bam: %_P.bam %_U.bam
-	@echo "Merging paired and singleton BAM files to make $@"
-	$(CHECK_EOF) $*_P.bam $*_U.bam
-	samtools merge -f $@ $*_P.bam $*_U.bam
+#Intermediate files, merged BAM output from mapping pairs & singletons to doubled ref
+$(BWA_X2_BAM): %_X2.bam: %_X2_P.bam %_X2_U.bam
+	@echo "Merging paired and single mappings into $@"
+	samtools merge -f $@ $*_X2_P.bam $*_X2_U.bam
+	$(CHECK_EOF) $@
+
+#TODO - Sort at this point?
+$(BWA_BAM): %.bam: %_X2.bam
+	@echo "Applying de-circle logic and dropping unmapped reads to make $@"
+	samtools view -h $*_X2.bam | $(DEDUP_CIRCLE) -c ../refs/$(call get_ref,$*).fas | samtools view -F 4 -S -b - > $*.bam
+	$(CHECK_EOF) $*.bam
 
 #####################################################
 
