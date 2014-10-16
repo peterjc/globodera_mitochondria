@@ -36,10 +36,11 @@ get_acc = $(firstword $(subst _vs_, , $1))
 get_ref = $(word 2,$(subst _vs_, , $1))
 
 #Want these to be auto-deleted intermediate files...
-#BWA_X2_P_SAM = $(patsubst %,%_X2_P.sam,$(COMBO))
-#BWA_X2_U_SAM = $(patsubst %,%_X2_U.sam,$(COMBO))
-#BWA_X2_P_BAM = $(patsubst %,%_X2_P.bam,$(COMBO))
-#BWA_X2_U_BAM = $(patsubst %,%_X2_U.bam,$(COMBO))
+BWA_X2_P_SAM = $(patsubst %,%_X2_P.sam,$(COMBO))
+BWA_X2_U_SAM = $(patsubst %,%_X2_U.sam,$(COMBO))
+BWA_X2_P_BAM = $(patsubst %,%_X2_P.bam,$(COMBO))
+BWA_X2_U_BAM = $(patsubst %,%_X2_U.bam,$(COMBO))
+
 BWA_X2_BAM = $(patsubst %,%_X2.bam,$(COMBO))
 BWA_X2_COV = $(patsubst %,%_X2.cov,$(COMBO))
 BWA_X2_COV_PNG = $(patsubst %,%_X2_bwa_coverage.png,$(ACCS))
@@ -62,6 +63,8 @@ all: single double bwa_map bwa_coverage
 	@echo ACCS: $(ACCS)
 	@echo REFS: $(REFS)
 	#@echo COMBO: $(COMBO)
+
+.INTERMEDIATE: $(BWA_X2_P_SAM) $(BWA_X2_U_SAM) $(BWA_X2_P_BAM) $(BWA_X2_U_BAM)
 
 single: $(SINGLE_REF) $(SINGLE_BWT)
 
@@ -97,21 +100,21 @@ bwa_map: $(BWA_BAM)
 
 #intermediate files, raw SAM output from mapping against doubled reference
 #TODO - how to set dependency to only the specific files needed?
-%_X2_P.sam: $(DOUBLE_REF) $(P) $(U)
+$(BWA_X2_P_SAM): %_X2_P.sam: $(DOUBLE_REF) $(P) $(U)
 	@echo "Mapping $(call get_acc,$*) pairs onto $(call get_ref,$*)"
 	$(BWA) mem -p -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_P.fastq.bgz > $@ 2> $*_X2_P.sam.log
 	rm $*_X2_P.sam.log
 
 #intermediate files, raw SAM output from mapping against doubled reference
 #TODO - how to set dependency to only the specific files needed?
-%_X2_U.sam: $(DOUBLE_REF) $(P) $(U)
+$(BWA_X2_U_SAM): %_X2_U.sam: $(DOUBLE_REF) $(P) $(U)
 	@echo "Mapping $(call get_acc,$*) orphans onto $(call get_ref,$*)"
 	$(BWA) mem -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_U.fastq.bgz > $@ 2> $*_X2_U.sam.log
 	rm $*_X2_U.sam.log
 
 #intermediate files, raw BAM output from mapping against doubled reference
 #Should be able to let make delete the input file at the end of the run, but can do now.
-%_X2_P.bam: %_X2_P.sam
+$(BWA_X2_P_BAM): %_X2_P.bam: %_X2_P.sam
 	@echo "Converting $< into $@"
 	samtools view -S -b $< > $@
 	$(CHECK_EOF) $@
@@ -119,7 +122,7 @@ bwa_map: $(BWA_BAM)
 
 #intermediate files, raw BAM output from mapping against doubled reference
 #Should be able to let make delete the input file at the end of the run, but can do now.
-%_X2_U.bam: %_X2_U.sam
+$(BWA_X2_U_BAM): %_X2_U.bam: %_X2_U.sam
 	@echo "Converting $< into $@"
 	samtools view -S -b $< > $@
 	$(CHECK_EOF) $@
