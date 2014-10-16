@@ -31,8 +31,8 @@ COMBO = $(foreach a,$(ACCS),$(foreach r,$(REFS),$(a)_vs_$(r)))
 get_acc = $(firstword $(subst _vs_, , $1))
 get_ref = $(word 2,$(subst _vs_, , $1))
 
-BWA_P = $(patsubst %,%_X2_P.sam,$(COMBO))
-BWA_U = $(patsubst %,%_X2_U.sam,$(COMBO))
+BWA_X2_P_SAM = $(patsubst %,%_X2_P.sam,$(COMBO))
+BWA_X2_U_SAM = $(patsubst %,%_X2_U.sam,$(COMBO))
 BWA_P_BAM = $(patsubst %,%_P.bam,$(COMBO))
 BWA_U_BAM = $(patsubst %,%_U.bam,$(COMBO))
 BWA_BAM = $(patsubst %,%.bam,$(COMBO))
@@ -92,14 +92,12 @@ bwa_p_map: $(BWA_P_BAM)
 bwa_u_map: $(BWA_U_BAM)
 
 #Intermediate file, raw SAM output for mapping against doubled reference
-#$(BWA_P): $P
-$(BWA_P): %_X2_P.sam:
+$(BWA_X2_P_SAM): %_X2_P.sam:
 	@echo "Mapping $(call get_acc,$*) pairs onto $(call get_ref,$*)"
 	$(BWA) mem -p -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_P.fastq.bgz > $*_X2_P.sam 2> $*_X2_P.sam.log
 	rm $*_X2_P.sam.log
 
-#$(BWA_U): $U
-$(BWA_U): %_X2_U.sam:
+$(BWA_X2_U_SAM): %_X2_U.sam:
 	@echo "Mapping $(call get_acc,$*) orphans onto $(call get_ref,$*)"
 	$(BWA) mem -S -a ../refs/$(call get_ref,$*)_X2.fas ../bloom_filter/$(call get_acc,$*)_U.fastq.bgz > $*_X2_U.sam 2> $*_X2_U.sam.log
 	rm $*_X2_U.sam.log
