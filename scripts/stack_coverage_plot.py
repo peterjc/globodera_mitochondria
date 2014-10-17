@@ -6,7 +6,7 @@ matplotlib.use('Agg') # Want to use without X windows
 from matplotlib import pyplot as plt
 from optparse import OptionParser
 
-VERSION = "0.0.2"
+VERSION = "0.0.3"
 
 USAGE = """usage: %prog -o OUTPUT.png INPUT.cov [INPUT2.cov ...]
 
@@ -30,7 +30,7 @@ parser.add_option("-o", "--output", dest="output",
 (options, args) = parser.parse_args()
 
 if not args:
-    sys.stderr.write("At least one coverage file required.")
+    sys.stderr.write("At least one coverage file required.\n")
     sys.exit(1)
 
 def load(filename):
@@ -39,12 +39,16 @@ def load(filename):
     assert line.startswith(">")
     while line and line[0] == ">":
         name = line[1:].split(None,1)[0]
+        length = int(line.split(" length ", 1)[1].strip())
         values = []
         while line:
             line = h.readline()
             if not line or line[0] == ">":
                 break
-            values.append([float(v) for v in line.rstrip("\n").split("\t")])
+            if line == "None\n":
+                values.append([0 for v in range(length)])
+            else:
+                values.append([float(v) for v in line.rstrip("\n").split("\t")])
         yield name, np.array(values, np.float)
     h.close()
 
