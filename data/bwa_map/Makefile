@@ -59,7 +59,7 @@ COVERAGE_PLOT = ../../scripts/stack_coverage_plot.py
 empty :=
 space := $(empty) $(empty)
 
-all: single double bwa_map bwa_coverage
+all: single double bwa_map bwa_coverage bwa_plots
 	@echo ACCS: $(ACCS)
 	@echo REFS: $(REFS)
 	#@echo COMBO: $(COMBO)
@@ -145,7 +145,7 @@ $(BWA_BAM): %.bam: %_X2.bam
 
 #####################################################
 
-bwa_coverage: $(BWA_COV) $(BWA_COV_PNG) $(BWA_X2_COV) $(BWA_X2_COV_PNG)
+bwa_coverage: $(BWA_COV) $(BWA_X2_COV)
 
 $(BWA_COV): %.cov: %.bam
 	@echo "Computing coverage of $(call get_acc,$*) mapped onto $(call get_ref,$*)"
@@ -158,6 +158,8 @@ $(BWA_X2_COV): %_X2.cov: %_X2.bam
 	$(CHECK_EOF) $<
 	samtools view -h $< | $(CALC_COVERAGE) -c ../refs/$(call get_ref,$*).fas -o $@
 	@touch $@
+
+bwa_plots: $(BWA_COV_PNG) $(BWA_X2_COV_PNG)
 
 #This claims to depend on *all* to coverage files, actually only
 #depends on those for the current read accession. How to say that?
