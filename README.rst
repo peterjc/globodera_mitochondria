@@ -52,7 +52,7 @@ length - 10, CIGAR 100M. These are not identical so deduplication will not
 remove them - however the weighted coverage approach should handle this.
 
 The key consideration with multiple mapping is placing reads which can be
-mapped to multiple circles... perhaps expliting partner reads here to flag
+mapped to multiple circles... perhaps exploiting partner reads here to flag
 potential reads from similar but unknown mitochondrial circles?
 
 
