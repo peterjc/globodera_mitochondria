@@ -62,7 +62,6 @@ space := $(empty) $(empty)
 all: single double bwa_map bwa_coverage bwa_plots
 	@echo ACCS: $(ACCS)
 	@echo REFS: $(REFS)
-	#@echo COMBO: $(COMBO)
 
 #These are intermediate, but I will remove them once not needed
 .SECONDARY: $(BWA_X2_P_SAM) $(BWA_X2_U_SAM) $(BWA_X2_P_BAM) $(BWA_X2_U_BAM)
