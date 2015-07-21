@@ -3,7 +3,7 @@
 
 This is a recreation of an old one-off script.
 
-We find the following 53-mer sequences is present exactly in nice of
+We find the following 53-mer sequences is present exactly in nine of
 references (AJ249395, DQ631911, DQ631912, DQ631913, EF462976, EF462977,
 EF462978, EF462980, EF462981). Missing in DQ631914, EF193005, EF462979.
 
